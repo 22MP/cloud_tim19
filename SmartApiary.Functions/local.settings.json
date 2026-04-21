@@ -1,0 +1,22 @@
+{
+  "_comment": "OVO SE NE COMMITUJE kada se dodaju pravi Azure kljucevi. Za sada sadrzi samo lokalne Azurite vrijednosti.",
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "AzureTableOptions:ConnectionString": "UseDevelopmentStorage=true",
+    "AzureTableOptions:UsersTable": "Users",
+    "AzureBlobOptions:ConnectionString": "UseDevelopmentStorage=true",
+    "AzureBlobOptions:ApiaryImagesBlob": "apiary-images",
+    "AzureQueueOptions:ConnectionString": "UseDevelopmentStorage=true",
+    "AzureQueueOptions:TelemetryQueue": "telemetry-queue",
+    "AzureQueueOptions:AlertQueue": "alert-queue",
+    "JwtOptions:Secret": "CHANGE_ME_WHEN_DEPLOYING",
+    "JwtOptions:Issuer": "SmartApiary",
+    "JwtOptions:Audience": "SmartApiary",
+    "JwtOptions:ExpirationMinutes": "60",
+    "EmailOptions:ApiKey": "CHANGE_ME_WHEN_DEPLOYING",
+    "EmailOptions:SenderEmail": "CHANGE_ME_WHEN_DEPLOYING",
+    "EmailOptions:SenderName": "Smart Apiary"
+  }
+}
