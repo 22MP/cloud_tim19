@@ -25,9 +25,6 @@
     <Folder Include="Persistence\AzureQueue\Mappers\" />
     <Folder Include="Persistence\AzureQueue\Messages\" />
     <Folder Include="Persistence\AzureQueue\Services\" />
-    <Folder Include="Persistence\AzureTable\KeyProviders\" />
-    <Folder Include="Persistence\AzureTable\Mappers\" />
-    <Folder Include="Persistence\AzureTable\Repositories\" />
   </ItemGroup>
 
 </Project>
