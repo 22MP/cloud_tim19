@@ -19,8 +19,6 @@
   <ItemGroup>
     <Folder Include="Common\Extensions\" />
     <Folder Include="Common\Options\" />
-    <Folder Include="Features\" />
-    <Folder Include="Interfaces\Repositories\" />
   </ItemGroup>
 
 </Project>

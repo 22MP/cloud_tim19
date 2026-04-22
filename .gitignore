@@ -5,11 +5,11 @@
 
 # TAJNI FAJLOVI - odkomentarisati kada se dodaju pravi Azure kljucevi
 # local.settings.json
+
 appsettings.Development.json
-*.env
 
 # dotenv files
-.env
+*.env
 
 # User-specific files
 *.rsuser
