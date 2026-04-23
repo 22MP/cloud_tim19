@@ -80,7 +80,7 @@ public class User : AggregateRoot
 
         user.GenerateActivationToken(createdAt);
 
-        user.AddDomainEvent(new UserCreatedEvent(user.Id.Value, user.Email, user.FirstName));
+        user.AddDomainEvent(new UserCreatedEvent(user.Id.Value, user.Email, user.FirstName, user.ActivationToken));
 
         return Result<User>.Success(user);
     }
@@ -150,7 +150,7 @@ public class User : AggregateRoot
         ActivationToken = null;
         ActivationTokenExpiry = null;
 
-        AddDomainEvent(new UserActivatedEvent(Id.Value, Email));
+        AddDomainEvent(new UserActivatedEvent(Id.Value, Email, FirstName));
 
         return Result.Success();
     }

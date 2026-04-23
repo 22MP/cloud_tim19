@@ -6,6 +6,7 @@ using SmartApiary.Infrastructure.Common.Options;
 using SmartApiary.Infrastructure.Persistence.AzureTable.Common;
 using SmartApiary.Infrastructure.Persistence.AzureTable.Entities;
 using SmartApiary.Application.Interfaces.Repositories;
+using SmartApiary.Application.Interfaces;
 
 namespace SmartApiary.Infrastructure.Persistence.AzureTable.Repositories;
 
@@ -13,7 +14,8 @@ internal class UserRepository(
     TableServiceClient tableServiceClient,
     ITableKeyProvider<User> keyProvider,
     ITableMapper<User, UserEntity> mapper,
-    IOptions<AzureTableOptions> options)
+    IOptions<AzureTableOptions> options,
+    IDomainEventDispatcher dispatcher)
     : AzureTableRepository<User, UserEntity>(
         tableServiceClient.GetTableClient(options.Value.UsersTable),
         keyProvider,
@@ -23,6 +25,12 @@ internal class UserRepository(
     public async Task SaveAsync(User user, CancellationToken ct = default)
     {
         await base.UpsertAsync(user, ct);
+
+        if (user.DomainEvents.Any())
+        {
+            await dispatcher.DispatchAsync(user.DomainEvents, ct);
+            user.ClearDomainEvents();
+        }
     }
 
     
