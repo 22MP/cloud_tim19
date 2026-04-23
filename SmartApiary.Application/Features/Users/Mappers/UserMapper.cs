@@ -1,6 +1,6 @@
 ﻿using SmartApiary.Application.Interfaces;
-using SmartApiary.Application.Features.Users.Queries;
 using SmartApiary.Domain.Models;
+using SmartApiary.Application.Features.Users.DTOs;
 
 namespace SmartApiary.Application.Features.Users.Mappers;
 

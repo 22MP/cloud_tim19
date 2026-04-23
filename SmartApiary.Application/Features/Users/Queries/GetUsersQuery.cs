@@ -3,18 +3,9 @@ using SmartApiary.Application.Interfaces;
 using SmartApiary.Domain.Common;
 using SmartApiary.Domain.Models;
 using SmartApiary.Application.Interfaces.Repositories;
+using SmartApiary.Application.Features.Users.DTOs;
 
 namespace SmartApiary.Application.Features.Users.Queries;
-
-
-public record UserDto(
-    string Id,
-    string FirstName,
-    string LastName,
-    string Email,
-    string Role,
-    string Status,
-    DateTime CreatedAt);
 
 public record GetUsersQuery() : IRequest<Result<IEnumerable<UserDto>>>;
 
