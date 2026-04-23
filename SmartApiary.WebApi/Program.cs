@@ -11,7 +11,8 @@ string notificationHubRoute = webApiConfig.GetValue<string>("NotificationHubRout
 builder.Services
     .AddWebApiServices(builder.Configuration)
     .AddWebApiCors(reactOrigin)
-    .AddWebApiSignalR();
+    .AddWebApiSignalR()
+    .AddWebApiAuth(builder.Configuration);
 
 var app = builder.Build();
 
@@ -27,6 +28,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

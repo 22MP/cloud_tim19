@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SmartApiary.Application.Common.Options;
 using SmartApiary.Infrastructure.Common.Options;
 using SmartApiary.Infrastructure.Extensions;
 
@@ -11,17 +12,36 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // Bind settings from appsettings.json
-        services.Configure<AzureTableOptions>(configuration.GetSection("AzureTableOptions"));
+        services.Configure<AzureTableOptions>(
+            configuration.GetSection(nameof(AzureTableOptions)));
+        services.Configure<AzureBlobOptions>(
+            configuration.GetSection(nameof(AzureBlobOptions)));
+        services.Configure<AzureQueueOptions>(
+            configuration.GetSection(nameof(AzureQueueOptions)));
+        services.Configure<JwtOptions>(
+            configuration.GetSection(nameof(JwtOptions)));
+        services.Configure<EmailOptions>(
+            configuration.GetSection(nameof(EmailOptions)));
+        services.Configure<FrontendOptions>(
+            configuration.GetSection(nameof(FrontendOptions)));
 
-        // Get connection string
         var tableConn = configuration.GetValue<string>("AzureTableOptions:ConnectionString")
-            ?? throw new InvalidOperationException("AzureTableOptions:ConnectionString is not configured.");
+            ?? throw new InvalidOperationException(
+                "AzureTableOptions:ConnectionString is not configured.");
 
-        
+        var blobConn = configuration.GetValue<string>("AzureBlobOptions:ConnectionString")
+            ?? throw new InvalidOperationException(
+                "AzureBlobOptions:ConnectionString is not configured.");
+
+        var queueConn = configuration.GetValue<string>("AzureQueueOptions:ConnectionString")
+            ?? throw new InvalidOperationException(
+                "AzureQueueOptions:ConnectionString is not configured.");
+
         services
-            .AddServices()      
-            .AddAzureTables(tableConn);
+            .AddServices()
+            .AddAzureTables(tableConn)
+            .AddAzureBlobs(blobConn)
+            .AddAzureQueues(queueConn);
 
         return services;
     }

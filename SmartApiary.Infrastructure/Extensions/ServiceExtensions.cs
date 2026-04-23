@@ -2,17 +2,17 @@
 using SmartApiary.Application.Interfaces;
 using SmartApiary.Infrastructure.Services;
 
-namespace SmartApiary.Infrastructure.Extensions
+namespace SmartApiary.Infrastructure.Extensions;
+
+internal static class ServiceExtensions
 {
-    internal static class ServiceExtensions
+    public static IServiceCollection AddServices(this IServiceCollection services)
     {
-        public static IServiceCollection AddServices(this IServiceCollection services)
-        {
-            services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
-
-            services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
-
-            return services;
-        }
+        services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
+        services.AddScoped<IJwtService, JwtService>();
+        services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
+        return services;
     }
 }
