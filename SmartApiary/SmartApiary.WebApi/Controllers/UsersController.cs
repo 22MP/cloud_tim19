@@ -13,6 +13,7 @@ namespace SmartApiary.WebApi.Controllers;
 public class UsersController(IMediator mediator) : ControllerBase
 {
     [HttpPost("register")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Register([FromBody] RegisterUserCommand command)
     {
         var result = await mediator.Send(command);
@@ -20,6 +21,7 @@ public class UsersController(IMediator mediator) : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAll()
     {
         var result = await mediator.Send(new GetUsersQuery());
@@ -27,6 +29,7 @@ public class UsersController(IMediator mediator) : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetById(string id)
     {
         var result = await mediator.Send(new GetUserByIdQuery(id));
@@ -34,6 +37,7 @@ public class UsersController(IMediator mediator) : ControllerBase
     }
 
     [HttpPatch("{id}/suspend")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Suspend(string id)
     {
         var result = await mediator.Send(new SuspendUserCommand(id));
@@ -41,6 +45,7 @@ public class UsersController(IMediator mediator) : ControllerBase
     }
 
     [HttpPatch("{id}/reactivate")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Reactivate(string id)
     {
         var result = await mediator.Send(new ReactivateUserCommand(id));
@@ -48,6 +53,7 @@ public class UsersController(IMediator mediator) : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(string id)
     {
         var result = await mediator.Send(new DeleteUserCommand(id));

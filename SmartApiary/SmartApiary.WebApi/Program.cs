@@ -1,6 +1,7 @@
-using Microsoft.OpenApi;
 using SmartApiary.WebApi.Extensions;
+using System.IdentityModel.Tokens.Jwt;
 
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 var builder = WebApplication.CreateBuilder(args);
 
 var webApiConfig = builder.Configuration.GetSection("WebApi");
@@ -20,10 +21,7 @@ app.UseCors(corsPolicyName);
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger(options =>
-    {
-        options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1;
-    });
+    app.UseSwagger();
     app.UseSwaggerUI();
 }
 
@@ -31,4 +29,5 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
 app.Run();

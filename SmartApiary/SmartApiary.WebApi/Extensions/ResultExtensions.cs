@@ -47,10 +47,11 @@ namespace SmartApiary.WebApi.Extensions
 
             return result.Error?.Type switch
             {
-                ErrorType.Validation => new BadRequestObjectResult(errorResponse),
-                ErrorType.NotFound => new NotFoundObjectResult(errorResponse),
-                ErrorType.Unexpected => new ObjectResult(errorResponse) { StatusCode = 500 },
-                _ => new BadRequestObjectResult(errorResponse)
+                ErrorType.Validation   => new BadRequestObjectResult(errorResponse),
+                ErrorType.NotFound     => new NotFoundObjectResult(errorResponse),
+                ErrorType.Unauthorized => new ObjectResult(errorResponse) { StatusCode = 401 },
+                ErrorType.Unexpected   => new ObjectResult(errorResponse) { StatusCode = 500 },
+                _                     => new BadRequestObjectResult(errorResponse)
             };
         }
     }
