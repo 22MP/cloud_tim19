@@ -2,75 +2,74 @@
 using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Logging;
+using SmartApiary.Application.Common;
 using SmartApiary.Application.Interfaces.Storage;
 
 namespace SmartApiary.Infrastructure.Persistence.AzureBlob;
 
-internal class AzureBlobStorage(
-    BlobServiceClient blobServiceClient,
-    ILogger<AzureBlobStorage> logger) : IFileStorage
+internal abstract class AzureBlobStorage<TMetadata>(BlobContainerClient containerClient, ILogger logger)
+        : IFileStorage<TMetadata>
 {
+    protected readonly BlobContainerClient _containerClient = containerClient;
+    protected readonly ILogger _logger = logger;
+
+    public abstract string GetBlobPath(TMetadata metadata);
+
     private static readonly FileExtensionContentTypeProvider _contentTypeProvider = new();
 
-    public async Task<string> UploadAsync(
-        string containerName,
-        string fileName,
-        Stream content,
-        string contentType,
-        CancellationToken ct = default)
+    public async Task<bool> ExistsAsync(string blobPath, CancellationToken ct = default)
     {
-        var containerClient = blobServiceClient.GetBlobContainerClient(containerName);
-        await containerClient.CreateIfNotExistsAsync(cancellationToken: ct);
+        var blobClient = _containerClient.GetBlobClient(blobPath);
 
-        var blobClient = containerClient.GetBlobClient(fileName);
+        var respone = await blobClient.ExistsAsync(ct);
+
+        return respone.Value;
+    }
+
+    public async Task SaveAsync(FileData<TMetadata> file, CancellationToken ct = default)
+    {
+        await _containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob, cancellationToken: ct);
+
+        var blobPath = GetBlobPath(file.Metadata);
+
+        var blobClient = _containerClient.GetBlobClient(blobPath);
+
+        using var stream = new MemoryStream(file.Content);
+
+        _logger.LogInformation("Uploading to container: {Container}, Path: {Path}",
+            _containerClient.Name, blobPath);
 
         var blobOptions = new BlobUploadOptions
         {
             HttpHeaders = new BlobHttpHeaders
             {
-                ContentType = contentType ?? GetContentType(fileName)
+                ContentType = GetContentType(blobPath)
             }
         };
 
-        await blobClient.UploadAsync(content, blobOptions, ct);
-
-        logger.LogInformation("Uploaded blob: {Container}/{FileName}", containerName, fileName);
-
-        return blobClient.Uri.ToString();
+        await blobClient.UploadAsync(stream, blobOptions, ct);
     }
-
-    public async Task<Stream> DownloadAsync(
-        string containerName,
-        string fileName,
-        CancellationToken ct = default)
+    public async Task<bool> ExistsAsync(TMetadata metadata, CancellationToken ct = default)
     {
-        var containerClient = blobServiceClient.GetBlobContainerClient(containerName);
-        var blobClient = containerClient.GetBlobClient(fileName);
-
-        var response = await blobClient.DownloadStreamingAsync(cancellationToken: ct);
-        return response.Value.Content;
+        var blobPath = GetBlobPath(metadata);
+        var blobClient = _containerClient.GetBlobClient(blobPath);
+        var response = await blobClient.ExistsAsync(ct);
+        return response.Value;
     }
-
-    public async Task DeleteAsync(
-        string containerName,
-        string fileName,
-        CancellationToken ct = default)
+    public async Task DeleteAsync(TMetadata metadata, CancellationToken ct = default)
     {
-        var containerClient = blobServiceClient.GetBlobContainerClient(containerName);
-        var blobClient = containerClient.GetBlobClient(fileName);
+        var blobPath = GetBlobPath(metadata);
+        var blobClient = _containerClient.GetBlobClient(blobPath);
 
-        await blobClient.DeleteIfExistsAsync(
-            DeleteSnapshotsOption.IncludeSnapshots,
-            cancellationToken: ct);
-
-        logger.LogInformation("Deleted blob: {Container}/{FileName}", containerName, fileName);
+        await blobClient.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots, cancellationToken: ct);
     }
-
     private static string GetContentType(string path)
     {
         if (_contentTypeProvider.TryGetContentType(path, out var contentType))
+        {
             return contentType!;
+        }
 
-        return "application/octet-stream";
+        return "application/octet-stream"; // fallback
     }
 }

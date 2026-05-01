@@ -13,6 +13,10 @@ internal static class ServiceExtensions
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<IImageResizer, ImageResizerService>();
+
+        services.AddHttpContextAccessor();
         return services;
     }
 }
