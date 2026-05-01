@@ -1,8 +1,11 @@
-﻿namespace SmartApiary.Application.Interfaces.Storage;
+﻿using SmartApiary.Application.Common;
 
-public interface IFileStorage
+namespace SmartApiary.Application.Interfaces.Storage
 {
-    Task<string> UploadAsync(string containerName, string fileName, Stream content, string contentType, CancellationToken ct = default);
-    Task<Stream> DownloadAsync(string containerName, string fileName, CancellationToken ct = default);
-    Task DeleteAsync(string containerName, string fileName, CancellationToken ct = default);
+    public interface IFileStorage<TMetadata>
+    {
+        Task SaveAsync(FileData<TMetadata> file, CancellationToken ct = default);
+        Task<bool> ExistsAsync(TMetadata metadata, CancellationToken ct = default);
+        Task DeleteAsync(TMetadata metadata, CancellationToken ct = default);
+    }
 }
