@@ -1,92 +1,91 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import api from "../api/axiosInstance";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { activate } from "../api/auth";
+import { Input, Button, Alert } from "../components/common/ui";
 
 export const ActivatePage = () => {
-    const [searchParams] = useSearchParams();
-    const token = searchParams.get("token") || "";
-    const navigate = useNavigate();
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState(false);
-    const [loading, setLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token") ?? "";
+  const navigate = useNavigate();
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError("");
-        setLoading(true);
-        try {
-            await api.post("/auth/activate", { token, password, confirmPassword });
-            setSuccess(true);
-            setTimeout(() => navigate("/login"), 3000);
-        } catch (err: any) {
-            setError(err.response?.data?.message || "Activation failed.");
-        } finally {
-            setLoading(false);
-        }
-    };
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-    if (success)
-        return (
-            <div className="min-h-screen bg-amber-50 flex items-center justify-center">
-                <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-                    <h2 className="text-xl font-bold text-green-700">Account Activated!</h2>
-                    <p className="text-gray-500 mt-2">Redirecting to login...</p>
-                </div>
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (password !== confirmPassword) return setError("Passwords do not match.");
+    if (password.length < 8) return setError("Password must be at least 8 characters.");
+
+    setLoading(true);
+    try {
+      await activate(token, password, confirmPassword);
+      setSuccess(true);
+      setTimeout(() => navigate("/login"), 3000);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Activation failed. Link may be expired.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-3xl shadow-2xl p-8 border border-amber-100">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <span className="text-3xl">{success ? "âœ…" : "ðŸ”‘"}</span>
             </div>
-        );
+            <h1 className="text-2xl font-bold text-gray-800">
+              {success ? "Account Activated!" : "Activate Account"}
+            </h1>
+            <p className="text-gray-500 text-sm mt-1">
+              {success
+                ? "Redirecting to login in 3 seconds..."
+                : "Create your password to get started"}
+            </p>
+          </div>
 
-    return (
-        <div className="min-h-screen bg-amber-50 flex items-center justify-center px-4">
-            <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
-                <div className="text-center mb-8">
-                    <h1 className="text-2xl font-bold text-amber-800">Activate Account</h1>
-                    <p className="text-gray-500 text-sm mt-1">Set your password to activate your account</p>
-                </div>
+          {success ? (
+            <Alert message="Your account is now active. You can log in." variant="success" />
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Input
+                label="New Password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Minimum 8 characters"
+              />
+              <Input
+                label="Confirm Password"
+                type="password"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Repeat your password"
+              />
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Password
-                        </label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
-                            placeholder="••••••••"
-                        />
-                    </div>
+              {error && <Alert message={error} variant="error" />}
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Confirm Password
-                        </label>
-                        <input
-                            type="password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
-                            placeholder="••••••••"
-                        />
-                    </div>
+              <Button type="submit" loading={loading} className="w-full justify-center" size="lg">
+                Activate Account
+              </Button>
 
-                    {error && (
-                        <div className="bg-red-50 border border-red-200 text-red-600 rounded-lg px-4 py-2 text-sm">
-                            {error}
-                        </div>
-                    )}
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg py-2 transition disabled:opacity-50"
-                    >
-                        {loading ? "Activating..." : "Activate Account"}
-                    </button>
-                </form>
-            </div>
+              <div className="text-center">
+                <Link to="/login" className="text-sm text-amber-600 hover:underline">
+                  Back to login
+                </Link>
+              </div>
+            </form>
+          )}
         </div>
-    );
+      </div>
+    </div>
+  );
 };
