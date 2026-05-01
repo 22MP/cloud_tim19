@@ -1,1 +1,39 @@
 @import "tailwindcss";
+
+@keyframes slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-slide-up {
+    animation: slide-up 0.2s ease-out;
+}
+
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-map-pane svg,
+.leaflet-map-pane canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+    z-index: 1 !important;
+}
+
+.leaflet-control {
+    z-index: 2 !important;
+}
+
+.leaflet-top,
+.leaflet-bottom {
+    z-index: 2 !important;
+}
