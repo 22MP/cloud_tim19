@@ -22,6 +22,7 @@ namespace SmartApiary.Infrastructure.Extensions
         {
             services.AddScoped<IApiaryRepository, ApiaryRepository>();
             services.AddScoped<IHiveRepository, HiveRepository>();
+            services.AddScoped<IDeviceRepository, DeviceRepository>();
             return services;
         }
 
@@ -30,9 +31,14 @@ namespace SmartApiary.Infrastructure.Extensions
             string connectionString)
         {
             services.AddSingleton(new TableServiceClient(connectionString));
+            
             services.AddSingleton<ITableMapper<User, UserEntity>, UserTableMapper>();
             services.AddSingleton<ITableKeyProvider<User>, UserTableKeyProvider>();
             services.AddScoped<IUserRepository, UserRepository>();
+            
+            services.AddSingleton<ITableMapper<TelemetrySample, TelemetrySampleEntity>, TelemetrySampleTableMapper>();
+            services.AddSingleton<ITableKeyProvider<TelemetrySample>, TelemetrySampleTableKeyProvider>();
+            services.AddScoped<ITelemetrySampleRepository, TelemetrySampleRepository>();
             return services;
         }
 

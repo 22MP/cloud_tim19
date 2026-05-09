@@ -111,8 +111,8 @@ BEGIN
         CONSTRAINT FK_TelemetrySamples_Devices FOREIGN KEY (DeviceId) REFERENCES Devices(Id) ON DELETE CASCADE,
         CONSTRAINT FK_TelemetrySamples_Hives FOREIGN KEY (HiveId) REFERENCES Hives(Id) ON DELETE NO ACTION
     );
-    CREATE INDEX IX_TelemetrySamples_HiveId            ON TelemetrySamples(HiveId);
-    CREATE INDEX IX_TelemetrySamples_DeviceId          ON TelemetrySamples(DeviceId);
+    CREATE INDEX IX_TelemetrySamples_HiveId ON TelemetrySamples(HiveId);
+    CREATE INDEX IX_TelemetrySamples_DeviceId ON TelemetrySamples(DeviceId);
     CREATE INDEX IX_TelemetrySamples_HiveId_RecordedAt ON TelemetrySamples(HiveId, RecordedAt DESC);
     PRINT 'Table TelemetrySamples created successfully.';
 END
