@@ -97,28 +97,7 @@ ELSE
     PRINT 'Table Devices already exists.';
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'TelemetrySamples')
-BEGIN
-    CREATE TABLE TelemetrySamples (
-        Id NVARCHAR(36) NOT NULL PRIMARY KEY,
-        DeviceId NVARCHAR(36) NOT NULL,
-        HiveId NVARCHAR(36) NOT NULL,
-        WeightKg FLOAT NOT NULL,
-        Humidity FLOAT NOT NULL,
-        Temperature FLOAT NOT NULL,
-        BatteryPercentage INT NOT NULL,
-        RecordedAt DATETIME2 NOT NULL,
-        CONSTRAINT FK_TelemetrySamples_Devices FOREIGN KEY (DeviceId) REFERENCES Devices(Id) ON DELETE CASCADE,
-        CONSTRAINT FK_TelemetrySamples_Hives FOREIGN KEY (HiveId) REFERENCES Hives(Id) ON DELETE NO ACTION
-    );
-    CREATE INDEX IX_TelemetrySamples_HiveId ON TelemetrySamples(HiveId);
-    CREATE INDEX IX_TelemetrySamples_DeviceId ON TelemetrySamples(DeviceId);
-    CREATE INDEX IX_TelemetrySamples_HiveId_RecordedAt ON TelemetrySamples(HiveId, RecordedAt DESC);
-    PRINT 'Table TelemetrySamples created successfully.';
-END
-ELSE
-    PRINT 'Table TelemetrySamples already exists.';
-GO
+DROP TABLE IF EXISTS TelemetrySamples;
 
 PRINT 'SmartApiary database is ready.';
 GO
