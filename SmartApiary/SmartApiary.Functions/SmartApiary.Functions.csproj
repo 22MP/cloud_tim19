@@ -28,7 +28,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Ingestion\" />
     <Folder Include="Processing\" />
   </ItemGroup>
 
