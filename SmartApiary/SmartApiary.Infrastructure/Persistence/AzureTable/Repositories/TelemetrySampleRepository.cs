@@ -21,7 +21,7 @@ namespace SmartApiary.Infrastructure.Persistence.AzureTable.Repositories
 
         public TelemetrySampleRepository(
             TableServiceClient tableServiceClient, ITableKeyProvider<TelemetrySample> keyProvider, IOptions<AzureTableOptions> options,
-            ITableMapper<TelemetrySample, TelemetrySampleEntity> mapper, IDomainEventDispatcher dispatcher) : 
+            ITableMapper<TelemetrySample, TelemetrySampleEntity> mapper) : 
             base( tableServiceClient.GetTableClient(options.Value.TelemetrySamplesTable), keyProvider, mapper)
         {
 
