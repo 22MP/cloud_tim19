@@ -1,7 +1,11 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Mvc;
+using SmartApiary.Application.Features.Devices.Commands.Registration;
+using SmartApiary.Application.Features.Telemetry.Commands;
 using SmartApiary.Application.Features.Users.Commands.Login;
+using SmartApiary.Domain.Common;
+using SmartApiary.WebApi.Extensions;
 
 namespace SmartApiary.WebApi.Controllers
 {
@@ -17,17 +21,37 @@ namespace SmartApiary.WebApi.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register()
+        public async Task<IActionResult> Register([FromBody] RegisterDeviceCommand command, CancellationToken ct)
         {
-            // TODO: implement RegisterDeviceCommand
-            return Ok(new { message = "Device registered (stub)" });
+            Result result = await _mediator.Send(command, ct);
+            return result.ToActionResult();
         }
 
         [HttpPost("telemetry")]
-        public async Task<IActionResult> Telemetry()
+        public async Task<IActionResult> Telemetry([FromBody] TelemetryRequest request, CancellationToken ct)
         {
-            // TODO: implement RegisterDeviceCommand
-            return Ok(new { message = "Device registered (stub)" });
+            var token = Request.Headers["X-Device-Token"].FirstOrDefault();
+            if (string.IsNullOrEmpty(token)) return Unauthorized("Missing X-Device-Token header.");
+
+            var result = await _mediator.Send(new IngestTelemetryCommand
+            {
+                AccessToken = token,
+                WeightKg = request.WeightKg,
+                Humidity = request.Humidity,
+                Temperature = request.Temperature,
+                BatteryPercentage = request.BatteryPercentage,
+                RecordedAt = request.RecordedAt
+            }, ct);
+
+            return result.ToActionResult();
         }
+
+        public record TelemetryRequest(
+             double WeightKg,
+            double Humidity,
+             double Temperature,
+            int BatteryPercentage,
+            DateTime RecordedAt);
+
     }
 }

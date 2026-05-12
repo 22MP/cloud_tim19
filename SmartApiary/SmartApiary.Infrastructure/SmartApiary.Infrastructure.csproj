@@ -26,7 +26,5 @@
 	<ItemGroup>
 		<Folder Include="Persistence\AzureQueue\Adapters\" />
 		<Folder Include="Persistence\AzureQueue\Mappers\" />
-		<Folder Include="Persistence\AzureQueue\Messages\" />
-		<Folder Include="Persistence\AzureQueue\Services\" />
 	</ItemGroup>
 </Project>

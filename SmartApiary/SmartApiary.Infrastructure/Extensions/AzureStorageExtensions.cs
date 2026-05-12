@@ -1,17 +1,20 @@
-﻿using Azure.Storage.Blobs;
+﻿using Azure.Data.Tables;
+using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
-using Azure.Data.Tables;
 using Microsoft.Extensions.DependencyInjection;
+using SmartApiary.Application.Interfaces.Messaging;
 using SmartApiary.Application.Interfaces.Repositories;
 using SmartApiary.Application.Interfaces.Storage;
-using SmartApiary.Infrastructure.Persistence.AzureBlob.Storages;
-using SmartApiary.Infrastructure.Persistence.AzureSql.Repositories;
-using SmartApiary.Infrastructure.Persistence.AzureTable.Repositories;
-using SmartApiary.Infrastructure.Persistence.AzureTable.Common;
-using SmartApiary.Infrastructure.Persistence.AzureTable.Mappers;
-using SmartApiary.Infrastructure.Persistence.AzureTable.KeyProviders;
-using SmartApiary.Infrastructure.Persistence.AzureTable.Entities;
 using SmartApiary.Domain.Models;
+using SmartApiary.Infrastructure.Persistence.AzureBlob.Storages;
+using SmartApiary.Infrastructure.Persistence.AzureQueue.Messages;
+using SmartApiary.Infrastructure.Persistence.AzureQueue.Services;
+using SmartApiary.Infrastructure.Persistence.AzureSql.Repositories;
+using SmartApiary.Infrastructure.Persistence.AzureTable.Common;
+using SmartApiary.Infrastructure.Persistence.AzureTable.Entities;
+using SmartApiary.Infrastructure.Persistence.AzureTable.KeyProviders;
+using SmartApiary.Infrastructure.Persistence.AzureTable.Mappers;
+using SmartApiary.Infrastructure.Persistence.AzureTable.Repositories;
 
 namespace SmartApiary.Infrastructure.Extensions
 {
@@ -39,6 +42,7 @@ namespace SmartApiary.Infrastructure.Extensions
             services.AddSingleton<ITableMapper<TelemetrySample, TelemetrySampleEntity>, TelemetrySampleTableMapper>();
             services.AddSingleton<ITableKeyProvider<TelemetrySample>, TelemetrySampleTableKeyProvider>();
             services.AddScoped<ITelemetrySampleRepository, TelemetrySampleRepository>();
+
             return services;
         }
 
@@ -56,10 +60,18 @@ namespace SmartApiary.Infrastructure.Extensions
             string connectionString)
         {
             
-            services.AddSingleton(_ => new QueueServiceClient(connectionString, new QueueClientOptions
+        
+
+            var queueServiceClient = new QueueServiceClient(connectionString, new QueueClientOptions
             {
                 MessageEncoding = QueueMessageEncoding.Base64
-            }));
+            });
+
+            queueServiceClient.GetQueueClient("telemetry-queue").CreateIfNotExists();
+
+            services.AddSingleton(queueServiceClient);
+            services.AddSingleton<ITelemetryQueueService, TelemetryQueueService>();
+
             return services;
         }
     }
