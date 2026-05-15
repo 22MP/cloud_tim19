@@ -61,3 +61,16 @@ export interface ApiResponse<T> {
   data: T;
   message?: string;
 }
+
+export interface HiveInspection {
+  id: string;
+  hiveId: string;
+  inspectionDate: string;
+  bottomBoardColor: string;
+  honeyFrames: number;
+  honeyKg: number;
+  broodFrames: number;
+  queenPresent: boolean;
+  notes?: string;
+  createdAt: string;
+}

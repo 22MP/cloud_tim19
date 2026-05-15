@@ -9,7 +9,7 @@ import { UsersPage } from "./pages/admin/UsersPage";
 import ApiariesPage from "./pages/beekeeper/ApiariesPage";
 import ApiaryDetailsPage from "./pages/beekeeper/ApiaryDetailsPage";
 import TelemetryPage from "./pages/beekeeper/TelemetryPage";
-
+import HiveDiaryPage from "./pages/beekeeper/HiveDiaryPage";
 function App() {
   return (
     <AuthProvider>
@@ -47,15 +47,23 @@ function App() {
                 <ApiaryDetailsPage />
               </ProtectedRoute>
             }
-           />
-           <Route
-            path="/beekeeper/apiaries/:apiaryId/telemetry"
-            element={
+            />
+            <Route
+              path="/beekeeper/hives/:hiveId/diary"
+              element={
+               <ProtectedRoute requiredRole="Beekeeper">
+                <HiveDiaryPage />
+               </ProtectedRoute>
+            }
+            />
+            />
+            <Route
+             path="/beekeeper/apiaries/:apiaryId/telemetry"
+             element={
               <ProtectedRoute requiredRole="Beekeeper">
                 <TelemetryPage />
               </ProtectedRoute>
-            }
-           />
+/>
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/login" replace />} />
