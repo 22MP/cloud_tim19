@@ -8,6 +8,7 @@ import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { UsersPage } from "./pages/admin/UsersPage";
 import ApiariesPage from "./pages/beekeeper/ApiariesPage";
 import ApiaryDetailsPage from "./pages/beekeeper/ApiaryDetailsPage";
+import HiveDiaryPage from "./pages/beekeeper/HiveDiaryPage";
 
 function App() {
   return (
@@ -44,6 +45,14 @@ function App() {
             element={
               <ProtectedRoute requiredRole="Beekeeper">
                 <ApiaryDetailsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/beekeeper/hives/:hiveId/diary"
+            element={
+              <ProtectedRoute requiredRole="Beekeeper">
+                <HiveDiaryPage />
               </ProtectedRoute>
             }
           />
