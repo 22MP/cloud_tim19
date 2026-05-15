@@ -16,19 +16,18 @@ export interface HiveInspection {
 export const getInspections = (hiveId: string) =>
   api.get<HiveInspection[]>(`/hives/${hiveId}/inspections`);
 
-export const createInspection = (
-  hiveId: string,
-  data: {
-    inspectionDate: string;
-    bottomBoardColor: string;
-    honeyFrames: number;
-    honeyKg: number;
-    broodFrames: number;
-    queenPresent: boolean;
-    notes?: string;
-  }
-) =>
+export const createInspection = (hiveId: string, data: any) =>
   api.post(`/hives/${hiveId}/inspections`, data);
 
-export const deleteInspection = (hiveId: string, inspectionId: string) =>
+export const updateInspection = (
+  hiveId: string,
+  inspectionId: string,
+  data: any
+) =>
+  api.put(`/hives/${hiveId}/inspections/${inspectionId}`, data);
+
+export const deleteInspection = (
+  hiveId: string,
+  inspectionId: string
+) =>
   api.delete(`/hives/${hiveId}/inspections/${inspectionId}`);

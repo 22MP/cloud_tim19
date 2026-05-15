@@ -4,11 +4,6 @@ using SmartApiary.Application.Interfaces.Repositories;
 using SmartApiary.Domain.Models;
 using SmartApiary.Domain.ValueObjects;
 using SmartApiary.Infrastructure.Common.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SmartApiary.Infrastructure.Persistence.AzureSql.Repositories
 {
@@ -49,12 +44,17 @@ namespace SmartApiary.Infrastructure.Persistence.AzureSql.Repositories
             await cmd.ExecuteNonQueryAsync(ct);
         }
 
-        public async Task<IReadOnlyCollection<HiveInspection>> GetByHiveAsync(EntityId hiveId, CancellationToken ct)
+        public async Task<IReadOnlyCollection<HiveInspection>> GetByHiveAsync(
+            EntityId hiveId,
+            CancellationToken ct)
         {
             const string sql = @"
-        SELECT * FROM HiveInspections
-        WHERE HiveId = @HiveId
-        ORDER BY InspectionDate DESC";
+                SELECT Id, HiveId, InspectionDate, BottomBoardColor,
+                       HoneyFrames, HoneyKg, BroodFrames,
+                       QueenPresent, Notes, CreatedAt
+                FROM HiveInspections
+                WHERE HiveId = @HiveId
+                ORDER BY InspectionDate DESC";
 
             var list = new List<HiveInspection>();
 
@@ -67,20 +67,85 @@ namespace SmartApiary.Infrastructure.Persistence.AzureSql.Repositories
 
             while (await reader.ReadAsync(ct))
             {
-                list.Add(HiveInspection.Create(
-                    reader["HiveId"].ToString()!,
-                    (DateTime)reader["InspectionDate"],
-                    reader["BottomBoardColor"].ToString()!,
-                    (int)reader["HoneyFrames"],
-                    Convert.ToDouble(reader["HoneyKg"]),
-                    (int)reader["BroodFrames"],
-                    (bool)reader["QueenPresent"],
-                    reader["Notes"] as string,
-                    (DateTime)reader["CreatedAt"]
-                ).Value);
+                list.Add(
+                    HiveInspection.Load(
+                        reader["Id"].ToString()!,
+                        reader["HiveId"].ToString()!,
+                        (DateTime)reader["InspectionDate"],
+                        reader["BottomBoardColor"].ToString()!,
+                        (int)reader["HoneyFrames"],
+                        Convert.ToDouble(reader["HoneyKg"]),
+                        (int)reader["BroodFrames"],
+                        (bool)reader["QueenPresent"],
+                        reader["Notes"] as string,
+                        (DateTime)reader["CreatedAt"]
+                    )
+                );
             }
 
             return list;
+        }
+
+        public async Task<HiveInspection?> GetByIdAsync(EntityId id, CancellationToken ct)
+        {
+            const string sql = @"
+                SELECT Id, HiveId, InspectionDate, BottomBoardColor,
+                       HoneyFrames, HoneyKg, BroodFrames,
+                       QueenPresent, Notes, CreatedAt
+                FROM HiveInspections
+                WHERE Id = @Id";
+
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync(ct);
+            await using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@Id", id.Value);
+
+            await using var reader = await cmd.ExecuteReaderAsync(ct);
+
+            if (!await reader.ReadAsync(ct))
+                return null;
+
+            return HiveInspection.Load(
+                reader["Id"].ToString()!,
+                reader["HiveId"].ToString()!,
+                (DateTime)reader["InspectionDate"],
+                reader["BottomBoardColor"].ToString()!,
+                (int)reader["HoneyFrames"],
+                Convert.ToDouble(reader["HoneyKg"]),
+                (int)reader["BroodFrames"],
+                (bool)reader["QueenPresent"],
+                reader["Notes"] as string,
+                (DateTime)reader["CreatedAt"]
+            );
+        }
+
+        public async Task UpdateAsync(HiveInspection inspection, CancellationToken ct)
+        {
+            const string sql = @"
+                UPDATE HiveInspections SET
+                    InspectionDate = @InspectionDate,
+                    BottomBoardColor = @BottomBoardColor,
+                    HoneyFrames = @HoneyFrames,
+                    HoneyKg = @HoneyKg,
+                    BroodFrames = @BroodFrames,
+                    QueenPresent = @QueenPresent,
+                    Notes = @Notes
+                WHERE Id = @Id";
+
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync(ct);
+            await using var cmd = new SqlCommand(sql, conn);
+
+            cmd.Parameters.AddWithValue("@Id", inspection.Id.Value);
+            cmd.Parameters.AddWithValue("@InspectionDate", inspection.InspectionDate);
+            cmd.Parameters.AddWithValue("@BottomBoardColor", inspection.BottomBoardColor);
+            cmd.Parameters.AddWithValue("@HoneyFrames", inspection.HoneyFrames);
+            cmd.Parameters.AddWithValue("@HoneyKg", inspection.HoneyKg);
+            cmd.Parameters.AddWithValue("@BroodFrames", inspection.BroodFrames);
+            cmd.Parameters.AddWithValue("@QueenPresent", inspection.QueenPresent);
+            cmd.Parameters.AddWithValue("@Notes", (object?)inspection.Notes ?? DBNull.Value);
+
+            await cmd.ExecuteNonQueryAsync(ct);
         }
 
         public async Task DeleteAsync(EntityId id, CancellationToken ct)
@@ -94,11 +159,5 @@ namespace SmartApiary.Infrastructure.Persistence.AzureSql.Repositories
 
             await cmd.ExecuteNonQueryAsync(ct);
         }
-
-        public Task<HiveInspection?> GetByIdAsync(EntityId id, CancellationToken ct)
-            => throw new NotImplementedException();
-
-        public Task UpdateAsync(HiveInspection inspection, CancellationToken ct)
-            => throw new NotImplementedException();
     }
 }

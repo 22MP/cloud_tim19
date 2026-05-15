@@ -29,7 +29,6 @@ namespace SmartApiary.WebApi.Controllers
             _current = current;
         }
 
-        // ✅ GET all inspections for hive
         [HttpGet]
         public async Task<IActionResult> Get(string hiveId, CancellationToken ct)
         {
@@ -47,10 +46,21 @@ namespace SmartApiary.WebApi.Controllers
 
             var data = await _repo.GetByHiveAsync(hiveIdResult.Value, ct);
 
-            return Ok(data);
+            return Ok(data.Select(x => new
+            {
+                id = x.Id.Value,
+                hiveId = x.HiveId.Value,
+                inspectionDate = x.InspectionDate,
+                bottomBoardColor = x.BottomBoardColor,
+                honeyFrames = x.HoneyFrames,
+                honeyKg = x.HoneyKg,
+                broodFrames = x.BroodFrames,
+                queenPresent = x.QueenPresent,
+                notes = x.Notes,
+                createdAt = x.CreatedAt
+            }));
         }
 
-        // ✅ CREATE new inspection
         [HttpPost]
         public async Task<IActionResult> Create(
             string hiveId,
@@ -70,7 +80,7 @@ namespace SmartApiary.WebApi.Controllers
                 return Unauthorized();
 
             var inspectionResult = HiveInspection.Create(
-                hiveIdResult.Value.Value,
+                hiveId,
                 request.InspectionDate,
                 request.BottomBoardColor,
                 request.HoneyFrames,
@@ -89,28 +99,48 @@ namespace SmartApiary.WebApi.Controllers
             return Ok();
         }
 
-        // ✅ DELETE inspection (with ownership validation)
+        [HttpPut("{inspectionId}")]
+        public async Task<IActionResult> Update(
+            string hiveId,
+            string inspectionId,
+            [FromBody] CreateInspectionRequest request,
+            CancellationToken ct)
+        {
+            var inspectionIdResult = EntityId.Create(inspectionId);
+            if (inspectionIdResult.IsFailure)
+                return BadRequest("Invalid inspection ID.");
+
+            var inspection = await _repo.GetByIdAsync(inspectionIdResult.Value, ct);
+            if (inspection == null)
+                return NotFound("Inspection not found.");
+
+            var updateResult = inspection.Update(
+                request.InspectionDate,
+                request.BottomBoardColor,
+                request.HoneyFrames,
+                request.HoneyKg,
+                request.BroodFrames,
+                request.QueenPresent,
+                request.Notes
+            );
+
+            if (updateResult.IsFailure)
+                return BadRequest(updateResult.Error?.Message);
+
+            await _repo.UpdateAsync(inspection, ct);
+
+            return Ok();
+        }
+
         [HttpDelete("{inspectionId}")]
         public async Task<IActionResult> Delete(
             string hiveId,
             string inspectionId,
             CancellationToken ct)
         {
-            var hiveIdResult = EntityId.Create(hiveId);
-            if (hiveIdResult.IsFailure)
-                return BadRequest("Invalid hive ID.");
-
             var inspectionIdResult = EntityId.Create(inspectionId);
             if (inspectionIdResult.IsFailure)
                 return BadRequest("Invalid inspection ID.");
-
-            var hive = await _hiveRepo.GetByIdAsync(hiveIdResult.Value, ct);
-            if (hive == null)
-                return NotFound("Hive not found.");
-
-            var apiary = await _apiaryRepo.GetByIdAsync(hive.ApiaryId, ct);
-            if (apiary == null || !apiary.IsOwnedBy(_current.UserId))
-                return Unauthorized();
 
             await _repo.DeleteAsync(inspectionIdResult.Value, ct);
 
