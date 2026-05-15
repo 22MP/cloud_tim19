@@ -18,4 +18,10 @@ public interface IEmailService
     string email,
     string firstName,
     CancellationToken ct = default);
+
+    Task SendAlertEmailAsync(
+        string email,
+        string subject,
+        string htmlMessage,
+        CancellationToken ct = default);
 }

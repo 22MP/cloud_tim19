@@ -1,5 +1,6 @@
 using SmartApiary.WebApi.Extensions;
 using System.IdentityModel.Tokens.Jwt;
+using SmartApiary.WebApi.Hubs;
 
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 var builder = WebApplication.CreateBuilder(args);
@@ -29,5 +30,6 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<TelemetryHub>(notificationHubRoute);
 
 app.Run();

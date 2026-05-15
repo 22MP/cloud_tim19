@@ -8,6 +8,7 @@ import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { UsersPage } from "./pages/admin/UsersPage";
 import ApiariesPage from "./pages/beekeeper/ApiariesPage";
 import ApiaryDetailsPage from "./pages/beekeeper/ApiaryDetailsPage";
+import TelemetryPage from "./pages/beekeeper/TelemetryPage";
 
 function App() {
   return (
@@ -46,7 +47,15 @@ function App() {
                 <ApiaryDetailsPage />
               </ProtectedRoute>
             }
-          />
+           />
+           <Route
+            path="/beekeeper/apiaries/:apiaryId/telemetry"
+            element={
+              <ProtectedRoute requiredRole="Beekeeper">
+                <TelemetryPage />
+              </ProtectedRoute>
+            }
+           />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/login" replace />} />

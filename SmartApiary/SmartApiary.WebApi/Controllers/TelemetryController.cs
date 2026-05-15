@@ -1,56 +1,80 @@
-﻿using MediatR;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SmartApiary.Application.Features.Users.Commands;
-using SmartApiary.Application.Features.Users.Commands.ManageUser;
-using SmartApiary.Application.Features.Users.Queries;
-using SmartApiary.WebApi.Extensions;
+using SmartApiary.Application.Features.Telemetry.DTOs;
+using SmartApiary.Application.Interfaces.Repositories;
+using SmartApiary.Domain.Models;
 
 namespace SmartApiary.WebApi.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class TelemetryController : ControllerBase // TODO: IMPLEMENT FAKE FAKE FAKE nema autorizacije jos
+[Authorize(Roles = "Beekeeper")]
+public class TelemetryController : ControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly ITelemetrySampleRepository _telemetryRepository;
 
-    public TelemetryController(IMediator mediator)
+    public TelemetryController(ITelemetrySampleRepository telemetryRepository)
     {
-        _mediator = mediator;
+        _telemetryRepository = telemetryRepository;
     }
 
-    // GET /api/telemetry/{hiveId}?from=2024-01-01&to=2024-01-31
     [HttpGet("{hiveId}")]
-    //[Authorize(Roles = "Beekeeper")]
-    public IActionResult GetByHive(string hiveId, [FromQuery] DateTime from, [FromQuery] DateTime to)
+    public async Task<IActionResult> GetByHive(string hiveId, [FromQuery] DateTime? from, [FromQuery] DateTime? to, CancellationToken ct)
     {
-        var fake = Enumerable.Range(0, 10).Select(i => new
-        {
-            id = Guid.NewGuid().ToString(),
-            hiveId = hiveId,
-            weightKg = 30.0 + i * 0.5,
-            humidity = 60.0 + i,
-            temperature = 34.0 + i * 0.1,
-            batteryPct = 80 - i,
-            recordedAt = DateTime.UtcNow.AddHours(-i)
-        });
-        return Ok(fake);
+        DateTime utcTo = (to ?? DateTime.UtcNow).ToUniversalTime();
+        DateTime utcFrom = (from ?? utcTo.AddDays(-7)).ToUniversalTime();
+
+        if (utcFrom > utcTo)
+            return BadRequest("'from' must be before 'to'.");
+
+        var samples = await _telemetryRepository.GetByHiveAsync(hiveId, utcFrom, utcTo, ct);
+
+        return Ok(samples
+            .OrderBy(x => x.RecordedAt)
+            .Select(ToDto));
     }
 
-    // GET /api/telemetry/{hiveId}/latest
     [HttpGet("{hiveId}/latest")]
-    //[Authorize(Roles = "Beekeeper")]
-    public IActionResult GetLatest(string hiveId)
+    public async Task<IActionResult> GetLatest(string hiveId, CancellationToken ct)
     {
-        return Ok(new
-        {
-            hiveId = hiveId,
-            weightKg = 35.5,
-            humidity = 65.0,
-            temperature = 34.2,
-            batteryPct = 78,
-            recordedAt = DateTime.UtcNow
-        });
+        var latest = await _telemetryRepository.GetLatestByHiveIdAsync(hiveId, ct);
+        return latest is null ? NotFound() : Ok(ToDto(latest));
     }
 
+    [HttpGet("{hiveId}/nectar-delta")]
+    public async Task<IActionResult> GetNectarDelta(string hiveId, [FromQuery] DateTime? from, [FromQuery] DateTime? to, CancellationToken ct)
+    {
+        DateTime utcTo = (to ?? DateTime.UtcNow).ToUniversalTime();
+        DateTime utcFrom = (from ?? utcTo.AddDays(-14)).ToUniversalTime();
+
+        if (utcFrom > utcTo)
+            return BadRequest("'from' must be before 'to'.");
+
+        var samples = await _telemetryRepository.GetByHiveAsync(hiveId, utcFrom.Date, utcTo.Date.AddDays(1).AddTicks(-1), ct);
+
+        var deltas = samples
+            .GroupBy(x => x.RecordedAt.Date)
+            .OrderBy(g => g.Key)
+            .Select(g =>
+            {
+                var daySamples = g.OrderBy(x => x.RecordedAt).ToList();
+                var sampleAt8 = daySamples.MinBy(x => Math.Abs((x.RecordedAt.TimeOfDay - TimeSpan.FromHours(8)).TotalMinutes));
+                var sampleAt20 = daySamples.MinBy(x => Math.Abs((x.RecordedAt.TimeOfDay - TimeSpan.FromHours(20)).TotalMinutes));
+                var delta = sampleAt8 is null || sampleAt20 is null ? 0 : Math.Round(sampleAt20.WeightKg - sampleAt8.WeightKg, 2);
+
+                return new NectarDeltaDto(g.Key, sampleAt8?.WeightKg, sampleAt20?.WeightKg, delta);
+            });
+
+        return Ok(deltas);
+    }
+
+    private static TelemetrySampleDto ToDto(TelemetrySample sample) => new(
+        sample.Id.Value,
+        sample.DeviceId.Value,
+        sample.HiveId.Value,
+        sample.WeightKg,
+        sample.Humidity,
+        sample.Temperature,
+        sample.BatteryPercentage,
+        sample.RecordedAt);
 }

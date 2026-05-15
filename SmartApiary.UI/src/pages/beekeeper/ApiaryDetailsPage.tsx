@@ -103,6 +103,15 @@ export default function ApiaryDetailsPage() {
                   variant="green"
                 />
               </div>
+              <div className="mt-4">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => navigate(`/beekeeper/apiaries/${id}/telemetry`)}
+                >
+                  Open Telemetry & Alerts
+                </Button>
+              </div>
             </div>
           </div>
 

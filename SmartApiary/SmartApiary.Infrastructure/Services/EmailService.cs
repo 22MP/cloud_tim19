@@ -63,6 +63,16 @@ internal class EmailService(
             ct);
     }
 
+
+    public async Task SendAlertEmailAsync(
+        string email,
+        string subject,
+        string htmlMessage,
+        CancellationToken ct = default)
+    {
+        await SendEmailAsync(email, subject, htmlMessage, ct);
+    }
+
     private async Task SendEmailAsync(
         string toEmail,
         string subject,

@@ -8,6 +8,8 @@ using SmartApiary.Infrastructure;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json.Serialization;
+using SmartApiary.Application.Interfaces;
+using SmartApiary.WebApi.Hubs;
 
 namespace SmartApiary.WebApi.Extensions;
 
@@ -128,9 +130,27 @@ public static class ServiceCollectionExtensions
                 NameClaimType = "sub",           
                 RoleClaimType = ClaimTypes.Role  
             };
+
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    var accessToken = context.Request.Query["access_token"];
+                    var path = context.HttpContext.Request.Path;
+
+                    if (!string.IsNullOrEmpty(accessToken) &&
+                        path.StartsWithSegments("/notification-hub"))
+                    {
+                        context.Token = accessToken;
+                    }
+
+                    return Task.CompletedTask;
+                }
+            };
         });
 
         services.AddAuthorization();
+        services.AddScoped<ITelemetryRealtimeNotifier, SignalRTelemetryRealtimeNotifier>();
 
         return services;
     }

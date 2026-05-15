@@ -7,6 +7,8 @@ using SmartApiary.Functions.Middlewares;
 using SmartApiary.Infrastructure;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SmartApiary.Application.Interfaces;
+using SmartApiary.Functions.Services;
 
 var builder = FunctionsApplication.CreateBuilder(args);
 
@@ -41,5 +43,11 @@ builder.Services
 builder.Services
     .AddInfrastructure(builder.Configuration)
     .AddApplication();
+
+builder.Services.AddScoped<
+    ITelemetryRealtimeNotifier,
+    NoOpTelemetryRealtimeNotifier>();
+
+builder.Services.AddScoped<IEmailService, NoOpEmailService>();
 
 builder.Build().Run();
