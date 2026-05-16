@@ -24,7 +24,7 @@ export interface Hive {
   boxColor?: string;
   queenAge?: number;
   note?: string;
-  devicePaired?: boolean;
+  isPaired?: boolean;
   createdAt?: string;
 }
 
