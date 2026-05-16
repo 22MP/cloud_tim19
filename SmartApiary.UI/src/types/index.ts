@@ -74,3 +74,12 @@ export interface HiveInspection {
   notes?: string;
   createdAt: string;
 }
+
+export interface UpcomingSprayingAlert {
+  scheduleId: string;
+  plotId: string;
+  plotName: string;
+  scheduledAt: string;
+  durationHours: number;
+  preparation?: string;
+}

@@ -18,59 +18,95 @@ namespace SmartApiary.Infrastructure.Persistence.AzureSql.Repositories
         public async Task<SprayingSchedule?> GetByIdAsync(EntityId id, CancellationToken ct = default)
         {
             const string sql = @"
-                SELECT Id, PlotId, ScheduledAt, DurationHours, Preparation,
-                       Status, NotifiedBeekeeperCount, CreatedAt
-                FROM SprayingSchedules
-                WHERE Id = @Id";
+                SELECT s.Id, s.PlotId, p.Name AS PlotName, s.ScheduledAt, s.DurationHours, s.Preparation,
+                       s.Status, s.NotifiedBeekeeperCount, s.CreatedAt
+                FROM SprayingSchedules s
+                INNER JOIN Plots p ON p.Id = s.PlotId
+                WHERE s.Id = @Id";
 
-            try
-            {
-                await using var conn = new SqlConnection(_connectionString);
-                await conn.OpenAsync(ct);
-                await using var cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@Id", id.Value);
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync(ct);
 
-                await using var reader = await cmd.ExecuteReaderAsync(ct);
-                if (!await reader.ReadAsync(ct)) return null;
+            await using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@Id", id.Value);
 
-                return MapToSchedule(reader);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "[SQL] Error fetching spraying schedule {Id}.", id.Value);
-                throw;
-            }
+            await using var reader = await cmd.ExecuteReaderAsync(ct);
+
+            if (!await reader.ReadAsync(ct))
+                return null;
+
+            return MapToSchedule(reader);
         }
 
-        public async Task<IReadOnlyCollection<SprayingSchedule>> GetByPlotIdAsync(EntityId plotId, CancellationToken ct = default)
+        public async Task<IReadOnlyCollection<SprayingSchedule>> GetByPlotIdAsync(
+            EntityId plotId,
+            CancellationToken ct = default)
         {
             const string sql = @"
-                SELECT Id, PlotId, ScheduledAt, DurationHours, Preparation,
-                       Status, NotifiedBeekeeperCount, CreatedAt
-                FROM SprayingSchedules
-                WHERE PlotId = @PlotId
-                ORDER BY ScheduledAt DESC";
+                SELECT s.Id, s.PlotId, p.Name AS PlotName, s.ScheduledAt, s.DurationHours, s.Preparation,
+                       s.Status, s.NotifiedBeekeeperCount, s.CreatedAt
+                FROM SprayingSchedules s
+                INNER JOIN Plots p ON p.Id = s.PlotId
+                WHERE s.PlotId = @PlotId
+                ORDER BY s.ScheduledAt DESC";
 
-            try
+            var list = new List<SprayingSchedule>();
+
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync(ct);
+
+            await using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@PlotId", plotId.Value);
+
+            await using var reader = await cmd.ExecuteReaderAsync(ct);
+
+            while (await reader.ReadAsync(ct))
             {
-                await using var conn = new SqlConnection(_connectionString);
-                await conn.OpenAsync(ct);
-                await using var cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@PlotId", plotId.Value);
-
-                await using var reader = await cmd.ExecuteReaderAsync(ct);
-                var schedules = new List<SprayingSchedule>();
-
-                while (await reader.ReadAsync(ct))
-                    schedules.Add(MapToSchedule(reader));
-
-                return schedules.AsReadOnly();
+                list.Add(MapToSchedule(reader));
             }
-            catch (Exception ex)
+
+            return list.AsReadOnly();
+        }
+
+        // ✅ 5km spatial query
+        public async Task<IReadOnlyCollection<(SprayingSchedule Schedule, string PlotName)>>
+            GetUpcomingNearLocationAsync(
+                double latitude,
+                double longitude,
+                double radiusMeters,
+                CancellationToken ct = default)
+        {
+            const string sql = @"
+                SELECT s.Id, s.PlotId, p.Name AS PlotName, s.ScheduledAt, s.DurationHours, s.Preparation,
+                       s.Status, s.NotifiedBeekeeperCount, s.CreatedAt
+                FROM SprayingSchedules s
+                INNER JOIN Plots p ON p.Id = s.PlotId
+                WHERE p.Location.STDistance(geography::Point(@Lat, @Lng, 4326)) <= @RadiusMeters
+                  AND s.Status = @Status
+                  AND s.ScheduledAt >= SYSUTCDATETIME()
+                ORDER BY s.ScheduledAt ASC";
+
+            var list = new List<(SprayingSchedule, string)>();
+
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync(ct);
+
+            await using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@Lat", latitude);
+            cmd.Parameters.AddWithValue("@Lng", longitude);
+            cmd.Parameters.AddWithValue("@RadiusMeters", radiusMeters);
+            cmd.Parameters.AddWithValue("@Status", (int)SprayingStatus.Scheduled);
+
+            await using var reader = await cmd.ExecuteReaderAsync(ct);
+
+            while (await reader.ReadAsync(ct))
             {
-                logger.LogError(ex, "[SQL] Error fetching spraying schedules for plot {PlotId}.", plotId.Value);
-                throw;
+                var schedule = MapToSchedule(reader);
+                var plotName = reader.GetString(reader.GetOrdinal("PlotName"));
+                list.Add((schedule, plotName));
             }
+
+            return list.AsReadOnly();
         }
 
         public async Task AddAsync(SprayingSchedule schedule, CancellationToken ct = default)
@@ -81,52 +117,38 @@ namespace SmartApiary.Infrastructure.Persistence.AzureSql.Repositories
                 VALUES
                     (@Id, @PlotId, @ScheduledAt, @DurationHours, @Preparation, @Status, @NotifiedBeekeeperCount, @CreatedAt)";
 
-            try
-            {
-                await using var conn = new SqlConnection(_connectionString);
-                await conn.OpenAsync(ct);
-                await using var cmd = new SqlCommand(sql, conn);
-                MapParameters(cmd, schedule);
-                await cmd.ExecuteNonQueryAsync(ct);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "[SQL] Error inserting spraying schedule {Id}.", schedule.Id.Value);
-                throw;
-            }
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync(ct);
+
+            await using var cmd = new SqlCommand(sql, conn);
+            MapParameters(cmd, schedule);
+
+            await cmd.ExecuteNonQueryAsync(ct);
         }
 
         public async Task UpdateAsync(SprayingSchedule schedule, CancellationToken ct = default)
         {
             const string sql = @"
                 UPDATE SprayingSchedules
-                SET ScheduledAt            = @ScheduledAt,
-                    DurationHours          = @DurationHours,
-                    Preparation            = @Preparation,
-                    Status                 = @Status,
+                SET ScheduledAt = @ScheduledAt,
+                    DurationHours = @DurationHours,
+                    Preparation = @Preparation,
+                    Status = @Status,
                     NotifiedBeekeeperCount = @NotifiedBeekeeperCount
                 WHERE Id = @Id";
 
-            try
-            {
-                await using var conn = new SqlConnection(_connectionString);
-                await conn.OpenAsync(ct);
-                await using var cmd = new SqlCommand(sql, conn);
-                MapParameters(cmd, schedule);
-                await cmd.ExecuteNonQueryAsync(ct);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "[SQL] Error updating spraying schedule {Id}.", schedule.Id.Value);
-                throw;
-            }
-        }
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync(ct);
 
-        // ── Helpers ──────────────────────────────────────────────────────────────
+            await using var cmd = new SqlCommand(sql, conn);
+            MapParameters(cmd, schedule);
+
+            await cmd.ExecuteNonQueryAsync(ct);
+        }
 
         private static SprayingSchedule MapToSchedule(SqlDataReader r)
         {
-            return SprayingSchedule.Load(
+            var result = SprayingSchedule.Load(
                 id: r.GetString(r.GetOrdinal("Id")),
                 plotId: r.GetString(r.GetOrdinal("PlotId")),
                 scheduledAt: r.GetDateTime(r.GetOrdinal("ScheduledAt")),
@@ -135,7 +157,12 @@ namespace SmartApiary.Infrastructure.Persistence.AzureSql.Repositories
                 status: (SprayingStatus)r.GetInt32(r.GetOrdinal("Status")),
                 notifiedBeekeeperCount: r.GetInt32(r.GetOrdinal("NotifiedBeekeeperCount")),
                 createdAt: r.GetDateTime(r.GetOrdinal("CreatedAt"))
-            ).Value;
+            );
+
+            if (result.IsFailure)
+                throw new InvalidOperationException(result.Error!.Message);
+
+            return result.Value;
         }
 
         private static void MapParameters(SqlCommand cmd, SprayingSchedule s)
