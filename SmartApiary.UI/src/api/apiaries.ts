@@ -36,3 +36,6 @@ export const uploadApiaryImage = (id: string, file: File) => {
 
 export const getUpcomingSprayings = (apiaryId: string) =>
   api.get(`/Apiaries/${apiaryId}/upcoming-sprayings`);
+
+export const getNearbyCultures = (apiaryId: string) =>
+  api.get(`/Apiaries/${apiaryId}/nearby-cultures`);

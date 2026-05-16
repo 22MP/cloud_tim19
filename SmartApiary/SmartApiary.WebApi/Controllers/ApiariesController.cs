@@ -7,6 +7,7 @@ using SmartApiary.Application.Features.Apiaries.Commands.UpdateApiary;
 using SmartApiary.Application.Features.Apiaries.Commands.UploadApiaryImage;
 using SmartApiary.Application.Features.Apiaries.Queries.GetApiaryById;
 using SmartApiary.Application.Features.Apiaries.Queries.GetMyApiaries;
+using SmartApiary.Application.Features.Plots.Queries.GetNearbyCultures;
 using SmartApiary.Application.Features.Spraying.Queries.GetUpcomingSprayingsNearApiary;
 using SmartApiary.WebApi.DTOs;
 using SmartApiary.WebApi.Extensions;
@@ -37,6 +38,15 @@ namespace SmartApiary.WebApi.Controllers
         {
             var result = await mediator.Send(
                 new GetUpcomingSprayingsNearApiaryQuery(id), ct);
+
+            return result.ToActionResult();
+        }
+
+        [HttpGet("{id}/nearby-cultures")]
+        public async Task<IActionResult> GetNearbyCultures(string id, CancellationToken ct)
+        {
+            var result = await mediator.Send(
+                new GetNearbyCulturesQuery(id), ct);
 
             return result.ToActionResult();
         }

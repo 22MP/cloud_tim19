@@ -83,3 +83,14 @@ export interface UpcomingSprayingAlert {
   durationHours: number;
   preparation?: string;
 }
+
+export interface NearbyCulture {
+  plotId: string;
+  plotName: string;
+  latitude: number;
+  longitude: number;
+  cultureType: number;
+  bloomingStart: string;
+  bloomingEnd: string;
+  additionalInfo?: string;
+}
