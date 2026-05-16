@@ -40,7 +40,7 @@ namespace SmartApiary.Simulator.NsDevice
 
         private void ConsumeBattery()
         {
-            int consumedAmount = 5;
+            int consumedAmount = _rnd.Next(3, 7);
             Battery = Battery - consumedAmount;
             if (Battery < 0) Battery = 0;
         }
