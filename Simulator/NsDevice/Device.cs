@@ -56,7 +56,7 @@ namespace SmartApiary.Simulator.NsDevice
         }
         public void SetSerialNumber(string serialNumber)
         {
-            if (serialNumber is not null)
+            if (_serialNumber is not null)
             {
                 Console.WriteLine("Serial Number is already set");
                 throw new InvalidOperationException();
