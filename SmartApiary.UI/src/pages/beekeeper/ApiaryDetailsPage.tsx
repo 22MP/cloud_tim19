@@ -145,7 +145,7 @@ export default function ApiaryDetailsPage() {
               <div className="flex gap-2">
                 <Badge label={`${hives.length} hives`} variant="amber" />
                 <Badge
-                  label={`${hives.filter((h) => h.devicePaired).length} IoT paired`}
+                  label={`${hives.filter((h) => h.isPaired).length} IoT paired`}
                   variant="green"
                 />
               </div>
