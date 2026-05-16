@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 interface HiveCardProps {
   hive: Hive;
+  onRegisterDevice: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }
@@ -28,6 +29,7 @@ const typeVariant = (
 
 export default function HiveCard({
   hive,
+  onRegisterDevice,
   onEdit,
   onDelete,
 }: HiveCardProps) {
@@ -97,6 +99,11 @@ export default function HiveCard({
         >
           Dnevnik
         </Button>
+
+        {!hive.devicePaired && (
+          <Button variant="ghost" size="sm" onClick={onRegisterDevice}>Register Device
+        </Button>
+)}
 
         <Button
           variant="secondary"

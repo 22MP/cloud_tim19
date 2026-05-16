@@ -12,6 +12,7 @@ import { PageLayout } from "../../components/layout/PageLayout";
 import { ToastContainer } from "../../components/common/ui";
 import { useToast } from "../../hooks/useToast";
 import MapView from "../../components/map/MapView";
+import { registerDevice } from "../../api/devices";
 
 export default function ApiaryDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +24,9 @@ export default function ApiaryDetailsPage() {
   const [editTarget, setEditTarget] = useState<Hive | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Hive | null>(null);
   const { toasts, addToast, removeToast } = useToast();
+  const [registerTarget, setRegisterTarget] = useState<Hive | null>(null);
+  const [serialNumber, setSerialNumber] = useState("");
+  const [registering, setRegistering] = useState(false);
 
   const loadApiary = async () => {
     try {
@@ -48,6 +52,22 @@ export default function ApiaryDetailsPage() {
     loadApiary();
     loadHives();
   }, [id]);
+
+  const handleRegisterDevice = async () => {
+    try {
+      setRegistering(true);
+      await registerDevice(registerTarget!.id, serialNumber);
+      addToast("Device registered!", "success");
+      setRegisterTarget(null);
+      setSerialNumber("");
+      loadHives();
+    } catch {
+      addToast("Registration failed.", "error");
+    } finally {
+      setRegistering(false);
+    }
+  };
+
 
   const handleDeleteHive = async (hiveId: string) => {
     try {
@@ -157,6 +177,7 @@ export default function ApiaryDetailsPage() {
             <HiveCard
               key={h.id}
               hive={h}
+              onRegisterDevice={() => setRegisterTarget(h)}
               onEdit={() => setEditTarget(h)}
               onDelete={() => setDeleteTarget(h)}
             />
@@ -199,6 +220,30 @@ export default function ApiaryDetailsPage() {
             onCancel={() => setEditTarget(null)}
           />
         )}
+      </Modal>
+
+      <Modal open={!!registerTarget}
+        onClose={() => { setRegisterTarget(null); setSerialNumber(""); }}
+        title="Register IoT Device" >
+
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-gray-500">
+            Enter the serial number from the back of the smart scale.
+          </p>
+          <input className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+            placeholder="SA-2024-00123"
+            value={serialNumber}
+            onChange={(e) => setSerialNumber(e.target.value)} />
+        
+          <div className="flex gap-2 justify-end">
+            <Button variant="secondary" onClick={() => setRegisterTarget(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleRegisterDevice} disabled={registering || !serialNumber}>
+              {registering ? "Registering..." : "Register"}
+            </Button>
+          </div>
+        </div>
       </Modal>
 
       {/* Delete confirm */}
