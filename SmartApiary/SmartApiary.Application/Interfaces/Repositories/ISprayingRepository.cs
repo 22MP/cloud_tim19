@@ -18,6 +18,10 @@ namespace SmartApiary.Application.Interfaces.Repositories
                 double radiusMeters,
                 CancellationToken ct = default);
 
+        Task<IReadOnlyCollection<SprayingSchedule>> GetExpiredScheduledAsync(
+            DateTime now,
+            CancellationToken ct = default);
+
         Task AddAsync(SprayingSchedule schedule, CancellationToken ct = default);
 
         Task UpdateAsync(SprayingSchedule schedule, CancellationToken ct = default);

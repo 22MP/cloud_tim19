@@ -68,7 +68,6 @@ namespace SmartApiary.Infrastructure.Persistence.AzureSql.Repositories
             return list.AsReadOnly();
         }
 
-        // ✅ 5km spatial query
         public async Task<IReadOnlyCollection<(SprayingSchedule Schedule, string PlotName)>>
             GetUpcomingNearLocationAsync(
                 double latitude,
@@ -104,6 +103,37 @@ namespace SmartApiary.Infrastructure.Persistence.AzureSql.Repositories
                 var schedule = MapToSchedule(reader);
                 var plotName = reader.GetString(reader.GetOrdinal("PlotName"));
                 list.Add((schedule, plotName));
+            }
+
+            return list.AsReadOnly();
+        }
+
+        public async Task<IReadOnlyCollection<SprayingSchedule>> GetExpiredScheduledAsync(
+            DateTime now,
+            CancellationToken ct = default)
+        {
+            const string sql = @"
+                SELECT s.Id, s.PlotId, p.Name AS PlotName, s.ScheduledAt, s.DurationHours, s.Preparation,
+                       s.Status, s.NotifiedBeekeeperCount, s.CreatedAt
+                FROM SprayingSchedules s
+                INNER JOIN Plots p ON p.Id = s.PlotId
+                WHERE s.Status = @Status
+                  AND DATEADD(HOUR, s.DurationHours, s.ScheduledAt) <= @Now";
+
+            var list = new List<SprayingSchedule>();
+
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync(ct);
+
+            await using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@Status", (int)SprayingStatus.Scheduled);
+            cmd.Parameters.AddWithValue("@Now", now);
+
+            await using var reader = await cmd.ExecuteReaderAsync(ct);
+
+            while (await reader.ReadAsync(ct))
+            {
+                list.Add(MapToSchedule(reader));
             }
 
             return list.AsReadOnly();
@@ -153,7 +183,9 @@ namespace SmartApiary.Infrastructure.Persistence.AzureSql.Repositories
                 plotId: r.GetString(r.GetOrdinal("PlotId")),
                 scheduledAt: r.GetDateTime(r.GetOrdinal("ScheduledAt")),
                 durationHours: r.GetInt32(r.GetOrdinal("DurationHours")),
-                preparation: r.IsDBNull(r.GetOrdinal("Preparation")) ? null : r.GetString(r.GetOrdinal("Preparation")),
+                preparation: r.IsDBNull(r.GetOrdinal("Preparation"))
+                    ? null
+                    : r.GetString(r.GetOrdinal("Preparation")),
                 status: (SprayingStatus)r.GetInt32(r.GetOrdinal("Status")),
                 notifiedBeekeeperCount: r.GetInt32(r.GetOrdinal("NotifiedBeekeeperCount")),
                 createdAt: r.GetDateTime(r.GetOrdinal("CreatedAt"))
