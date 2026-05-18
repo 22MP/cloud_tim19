@@ -1,0 +1,20 @@
+{
+  "AzureTableOptions": {
+    "ConnectionString": "DefaultEndpointsProtocol=https;AccountName=funcsmartapiary19prbab1;AccountKey=0DC8lXCf00RbELxvmEMRJOI5rUEOpYFaFy5OKG6EElOcfJz+jVo8uelyl/ya1wfwkcs0gDUVdUZZ+AStS17+sg==;EndpointSuffix=core.windows.net"
+  },
+  "AzureBlobOptions": {
+    "ConnectionString": "DefaultEndpointsProtocol=https;AccountName=funcsmartapiary19prbab1;AccountKey=0DC8lXCf00RbELxvmEMRJOI5rUEOpYFaFy5OKG6EElOcfJz+jVo8uelyl/ya1wfwkcs0gDUVdUZZ+AStS17+sg==;EndpointSuffix=core.windows.net"
+  },
+  "AzureQueueOptions": {
+    "ConnectionString": "DefaultEndpointsProtocol=https;AccountName=funcsmartapiary19prbab1;AccountKey=0DC8lXCf00RbELxvmEMRJOI5rUEOpYFaFy5OKG6EElOcfJz+jVo8uelyl/ya1wfwkcs0gDUVdUZZ+AStS17+sg==;EndpointSuffix=core.windows.net"
+  },
+  "AzureSqlOptions": {
+    "ConnectionString": "Server=XXX.database.windows.net;Database=SmartApiary;User Id=XXX;Password=XXX;Encrypt=True;"
+  },
+  "JwtOptions": {
+    "Secret": "SmartApiary_JWT_Secret_Key_2024_XYZ!!"
+  },
+  "WeatherOptions": {
+    "ApiKey": "vaš-weather-api-key"
+  }
+}
